@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   QuantLab design tokens — "instrument rig"
+   ----------------------------------------------------------------------------
+   A calibration bench, not a dashboard. Warm paper ground, near-black ink, and
+   exactly ONE accent (vermillion) reserved for model disagreement — the single
+   thing this whole product exists to surface. If the accent starts appearing on
+   anything else, the screen stops meaning anything.
+   ========================================================================== */
+
+@theme {
+  /* surfaces */
+  --color-paper: #eeece7;
+  --color-paper-raised: #f6f5f1;
+  --color-paper-sunk: #e6e3dc;
+
+  /* ink */
+  --color-ink: #12120f;
+  --color-ink-2: #6a675e;
+  --color-ink-3: #9b978c;
+  --color-rule: #d5d1c6;
+  --color-rule-soft: #e2ded4;
+
+  /* the only accent: model delta */
+  --color-accent: #d94f1e;
+  --color-accent-soft: #f4d9cd;
+
+  /* signed outcomes — used ONLY on values that can be positive or negative */
+  --color-up: #1f6b45;
+  --color-down: #a4342a;
+
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html,
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The bench grid. Deliberately low contrast — it should read as graph paper you
+   stopped noticing ten seconds in, not as a UI element competing for attention. */
+.rig-grid {
+  background-image:
+    linear-gradient(var(--color-rule-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-rule-soft) 1px, transparent 1px);
+  background-size: 34px 34px;
+  background-position: -1px -1px;
+}
+
+/* Micro-labels. Uppercase mono with wide tracking, used for every field name.
+   Wide tracking is what keeps 9px legible. */
+.lab {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Display numerals: the hero figures only. Tables stay in mono so columns
+   actually align under the eye. */
+.display {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-rule);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+input,
+select,
+button {
+  font-family: inherit;
+}
+input[type="range"] {
+  accent-color: var(--color-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

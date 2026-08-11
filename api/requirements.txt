@@ -1,0 +1,15 @@
+# Runtime dependencies for the Vercel Python function (api/index.py).
+#
+# Deliberately narrower than pyproject's install_requires: `rich` and `typer`
+# are CLI-only and never imported by quantlab.api, and Vercel's 250 MB unzipped
+# bundle limit is not generous once pandas and numpy are in.
+#
+# Keep in sync with [project.dependencies] in pyproject.toml for anything the
+# API path actually imports.
+httpx>=0.27
+pandas>=2.1
+numpy>=1.26
+pydantic>=2.6
+pydantic-settings>=2.2
+python-dateutil>=2.9
+fastapi>=0.110

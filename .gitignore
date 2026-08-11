@@ -1,0 +1,39 @@
+# --- python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# --- local data + secrets: never commit either ---
+# NOTE the leading slash. A bare `data/` matches at EVERY level, which silently
+# excluded the entire `quantlab/data/` package (both venue clients and the
+# store) from the first commit. Anchor runtime-directory ignores to the root.
+/data/
+*.db
+*.sqlite*
+.env
+.env.local
+secrets/
+*.pem
+
+# --- caches ---
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# --- node / next ---
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# --- os / editor ---
+.DS_Store
+.idea/
+.vscode/

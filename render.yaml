@@ -1,0 +1,29 @@
+# Render blueprint for the API.
+# Render dashboard -> New -> Blueprint -> point at this repo.
+#
+# Note on the disk: Render's free tier has no persistent disk, so paper-trading
+# state resets on every deploy. Scanning and backtesting are stateless and work
+# fine on free. Uncomment the `disk` block (paid plan) to keep fill history.
+
+services:
+  - type: web
+    name: quantlab-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: QUANTLAB_DATA_DIR
+        value: /data
+      # Set this to your Vercel URL after the frontend is deployed.
+      - key: QUANTLAB_CORS_ORIGINS
+        sync: false
+      # Both venues serve market data publicly; keys are only for trading,
+      # which this service cannot do.
+      - key: QUANTLAB_RATE_LIMIT_RPS
+        value: "6"
+    # disk:
+    #   name: quantlab-data
+    #   mountPath: /data
+    #   sizeGB: 1
