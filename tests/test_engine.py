@@ -320,6 +320,11 @@ class TestPnLAccounting:
         m = M.compute(trades, pd.Series([100_200.0, 100_400.0]), 100_000.0)
         assert m.edge_capture == pytest.approx(1.0)
 
+        # A trade with no fair value has no edge and must not blank the ratio.
+        trades.loc[2] = ["YES", 0.50, np.nan, 200.0, 1_000.0, 0.20]
+        m = M.compute(trades, pd.Series([100_200.0, 100_400.0, 100_600.0]), 100_000.0)
+        assert m.edge_capture == pytest.approx(1.0)
+
     def test_settlement_uses_the_resolution_value(self):
         # min/max price widened so positions aren't force-closed by the
         # tradability filter as the synthetic price converges to 0 or 1.

@@ -207,7 +207,8 @@ def compute(trades: pd.DataFrame, equity: pd.Series, initial_capital: float) -> 
         # edge to the same units before dividing, as the paper portfolio does.
         px = trades["entry_price"].to_numpy(dtype=float)
         basis = np.clip(np.where(trades["side"].to_numpy() == "YES", px, 1 - px), 1e-6, None)
-        predicted = float(np.mean(trades["edge"].abs().to_numpy(dtype=float) / basis))
+        # nanmean: a trade without a fair value has no edge, as in avg_edge.
+        predicted = float(np.nanmean(trades["edge"].abs().to_numpy(dtype=float) / basis))
     if predicted > 0:
         m.edge_capture = float(m.expectancy / predicted)
 
