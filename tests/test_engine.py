@@ -309,6 +309,17 @@ class TestPnLAccounting:
         assert trade(0.10, 1.0, 1.0, True)["slippage"] == pytest.approx(entry_only)
         assert trade(0.90, -1.0, 0.0, True)["slippage"] == pytest.approx(entry_only)
 
+    def test_edge_capture_compares_like_with_like(self):
+        """A 2c edge on a 10c contract is a 20% expected return. Realizing
+        exactly that is a capture of 1.0, on either leg."""
+        from quantlab.backtest import metrics as M
+        trades = pd.DataFrame({
+            "side": ["YES", "NO"], "entry_price": [0.10, 0.90], "edge": [0.02, 0.02],
+            "pnl": [200.0, 200.0], "notional": [1_000.0, 1_000.0], "ret": [0.20, 0.20],
+        })
+        m = M.compute(trades, pd.Series([100_200.0, 100_400.0]), 100_000.0)
+        assert m.edge_capture == pytest.approx(1.0)
+
     def test_settlement_uses_the_resolution_value(self):
         # min/max price widened so positions aren't force-closed by the
         # tradability filter as the synthetic price converges to 0 or 1.
