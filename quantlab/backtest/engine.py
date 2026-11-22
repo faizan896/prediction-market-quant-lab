@@ -298,9 +298,15 @@ def _price_segments(
     contracts = notional / basis
 
     gross_pnl = side * contracts * (exit_px - entry_px)
-    costs = fr.round_trip_cost(entry_px, exit_px, contracts, seg_liq)
-    fees = fr.fees(entry_px, contracts) + fr.fees(exit_px, contracts)
-    slip = costs - fees
+    # Slippage is charged on the cash that changes hands, which for the NO leg
+    # is (1 - yes_price) per contract. Settlement is not a trade, so a position
+    # held to resolution pays no exit costs. Both match the paper broker.
+    exit_basis = np.where(side > 0, exit_px, 1.0 - exit_px)
+    fees = fr.fees(entry_px, contracts) + np.where(settled, 0.0, fr.fees(exit_px, contracts))
+    slip = fr.slippage(basis * contracts, seg_liq) + np.where(
+        settled, 0.0, fr.slippage(exit_basis * contracts, seg_liq)
+    )
+    costs = fees + slip
     pnl = gross_pnl - costs
 
     hold = (ts[exit_idx] - ts[start]) / np.timedelta64(1, "h")
