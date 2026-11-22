@@ -269,6 +269,62 @@ class TestPnLAccounting:
         down = run_backtest(make([0.60, 0.60, 0.40, 0.40]), Fixed(-1.0), cfg)
         assert up.trades.iloc[0]["pnl"] == pytest.approx(down.trades.iloc[0]["pnl"], rel=0.01)
 
+    def test_costs_match_the_paper_broker(self):
+        """YES at 10c and NO at a 90c YES price deploy the same cash, so they
+        pay the same slippage. A position held to resolution pays none on exit."""
+        from quantlab.backtest.frictions import FrictionModel
+        from quantlab.backtest.sizing import SizingConfig
+        base_ts = [datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(hours=i) for i in range(4)]
+
+        def make(price, resolution):
+            return pd.DataFrame({
+                "key": ["m"] * 4, "ts": base_ts, "price": [price] * 4,
+                "yes_bid": [price] * 4, "yes_ask": [price] * 4,
+                "resolution": [resolution] * 4, "liquidity": [50_000.0] * 4,
+            })
+
+        class Hold(Strategy):
+            name = "Hold"
+
+            def __init__(self, direction):
+                super().__init__(direction=direction)
+
+            def generate(self, p):
+                return self.frame(pd.Series(self.direction, index=p.index), p["price"])
+
+        def trade(price, direction, resolution, settle):
+            cfg = BacktestConfig(
+                frictions=FrictionModel(spread_ticks=0.0, slippage_bps=20.0, impact_coef=0.15),
+                signal_lag=0, settle_at_resolution=settle, min_price=0.0, max_price=1.0,
+                sizing=SizingConfig(method="fixed_notional", fixed_notional=1_000.0,
+                                    max_fraction=1.0, max_liquidity_share=1.0),
+            )
+            return run_backtest(make(price, resolution), Hold(direction), cfg).trades.iloc[0]
+
+        yes = trade(0.10, 1.0, np.nan, False)
+        no = trade(0.90, -1.0, np.nan, False)
+        assert no["slippage"] == pytest.approx(yes["slippage"])
+
+        entry_only = yes["slippage"] / 2
+        assert trade(0.10, 1.0, 1.0, True)["slippage"] == pytest.approx(entry_only)
+        assert trade(0.90, -1.0, 0.0, True)["slippage"] == pytest.approx(entry_only)
+
+    def test_edge_capture_compares_like_with_like(self):
+        """A 2c edge on a 10c contract is a 20% expected return. Realizing
+        exactly that is a capture of 1.0, on either leg."""
+        from quantlab.backtest import metrics as M
+        trades = pd.DataFrame({
+            "side": ["YES", "NO"], "entry_price": [0.10, 0.90], "edge": [0.02, 0.02],
+            "pnl": [200.0, 200.0], "notional": [1_000.0, 1_000.0], "ret": [0.20, 0.20],
+        })
+        m = M.compute(trades, pd.Series([100_200.0, 100_400.0]), 100_000.0)
+        assert m.edge_capture == pytest.approx(1.0)
+
+        # A trade with no fair value has no edge and must not blank the ratio.
+        trades.loc[2] = ["YES", 0.50, np.nan, 200.0, 1_000.0, 0.20]
+        m = M.compute(trades, pd.Series([100_200.0, 100_400.0, 100_600.0]), 100_000.0)
+        assert m.edge_capture == pytest.approx(1.0)
+
     def test_settlement_uses_the_resolution_value(self):
         # min/max price widened so positions aren't force-closed by the
         # tradability filter as the synthetic price converges to 0 or 1.
